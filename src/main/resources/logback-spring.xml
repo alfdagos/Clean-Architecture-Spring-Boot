@@ -1,0 +1,21 @@
+<configuration>
+
+  <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+  <springProperty name="LOG_PATTERN" source="logging.pattern.console" default="%d{yyyy-MM-dd HH:mm:ss} - %msg%n"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <appender name="SEQ" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>seq:5341</destination>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE" />
+    <appender-ref ref="SEQ" />
+  </root>
+
+</configuration>

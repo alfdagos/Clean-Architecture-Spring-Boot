@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: cleana
+      POSTGRES_USER: cleana
+      POSTGRES_PASSWORD: cleana
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  seq:
+    image: datalust/seq:2024.1
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "8081:80"
+      - "5341:5341"
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/cleana
+      SPRING_DATASOURCE_USERNAME: cleana
+      SPRING_DATASOURCE_PASSWORD: cleana
+      JWT_SECRET: verysecretkeychangeme
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:
