@@ -1,0 +1,26 @@
+# Maven / Java
+/target/
+/.idea/
+*.iml
+*.class
+*.log
+.classpath
+.project
+.settings/
+.mvn/wrapper/maven-wrapper.jar
+
+# OS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Docker
+docker-compose.override.yml
+.mvn/
+target/
+.idea/
+.vscode/
+*.iml
+/.settings/
+.DS_Store

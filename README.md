@@ -1,85 +1,84 @@
 # Clean Architecture - Java (Spring Boot)
 
-Questo progetto è una codebase Java che applica i principi della Clean Architecture.
-Fornisce una base organizzata e manutenibile per lo sviluppo di applicazioni con Spring Boot.
+This project is a Java codebase that applies the principles of Clean Architecture.
+It provides a structured and maintainable starting point for building Spring Boot applications.
 
-Contenuto principale
-- Architettura a strati: domain, repository, service, controller (presentation)
-- Persistenza: JPA + PostgreSQL
-- Migrazioni: Flyway (cartella `src/main/resources/db/migration`)
-- Autenticazione: JWT (HS256) con claims subject=userId e claim `email`
+Main features
+- Layered architecture: domain, repository, service, controller (presentation)
+- Persistence: JPA + PostgreSQL
+- Migrations: Flyway (folder `src/main/resources/db/migration`)
+- Authentication: JWT (HS256) with subject=userId and `email` claim
 - Password hashing: PBKDF2WithHmacSHA512
-- Logging: Logback + Logstash encoder -> Seq (docker-compose espone porta 5341)
-- Domain events: semplice raccolta in `BaseEntity` e pubblicazione tramite ApplicationEventPublisher dopo il save
-- Permission system: entità `Permission` + `PermissionService` per controlli autorizzativi
+- Logging: Logback + Logstash encoder -> Seq (docker-compose exposes port 5341)
+- Domain events: simple collection in `BaseEntity` and publishing via ApplicationEventPublisher after save
+- Permission system: `Permission` entity + `PermissionService` for authorization checks
 
-Motivazione della Clean Architecture
------------------------------------
-Clean Architecture separa le responsabilità in layer chiari per rendere il codice più manutenibile, testabile e indipendente dal framework o dalla tecnologia di persistenza.
+Why Clean Architecture
+----------------------
+Clean Architecture separates responsibilities into clear layers to make the code more maintainable, testable and independent from frameworks or persistence technologies.
 
-Principi chiave presenti in questo progetto:
-- Entities (Domain): contengono la logica di dominio e i modelli di dati (cartella `domain`).
-- Use cases / Services (Application): orchestrano operazioni di alto livello (cartella `service`).
-- Adapters / Infrastructure: implementazioni tecniche (JPA repositories, JWT provider, password hashing).
-- Presentation: controller REST che espongono gli endpoint.
+Key principles applied in this project:
+- Entities (Domain): contain domain logic and data models (folder `domain`).
+- Use cases / Services (Application): orchestrate high-level operations (folder `service`).
+- Adapters / Infrastructure: technical implementations (JPA repositories, JWT provider, password hashing).
+- Presentation: REST controllers that expose API endpoints.
 
-Come sono state realizzate le scelte architetturali
---------------------------------------------------
-- Separazione dei layer: il codice è organizzato in pacchetti `domain`, `repository`, `service`, `controller`, `security`, `permission`, `mapper`, `exception`.
-- Dipendenza verso il basso: i servizi dipendono dalle interfacce dei repository e non dal framework direttamente (Spring wiring attraverso constructor injection).
-- Domain Events: ogni entità può raccogliere domain events tramite `BaseEntity`. I servizi pubblicano questi eventi dopo il salvataggio con `ApplicationEventPublisher`.
-- Password hashing: PBKDF2WithHmacSHA512 configurato con salt 16, 500k iterazioni e hash 32 bytes.
-- Autenticazione e autorizzazione: JWT con subject=userId e claim `email`. `SecurityConfig` aggiunge un filtro che valida il token e imposta il principal come userId; il `SecurityUserContext` estrae userId per i service.
-- Permissions: tabella `permissions` e `PermissionService` per i controlli autorizzativi.
+Design choices
+--------------
+- Layer separation: code is organized in packages `domain`, `repository`, `service`, `controller`, `security`, `permission`, `mapper`, `exception`.
+- Dependency direction: services depend on repository interfaces and not on the framework directly (Spring wiring uses constructor injection).
+- Domain Events: entities can collect domain events via `BaseEntity`. Services publish these events after persistence using `ApplicationEventPublisher`.
+- Password hashing: PBKDF2WithHmacSHA512 configured with 16 bytes salt, 500k iterations and 32 bytes hash.
+- Authentication and authorization: JWT with subject=userId and `email` claim. `SecurityConfig` adds a filter that validates the token and sets the principal to the userId; `SecurityUserContext` extracts the userId for services.
+- Permissions: `permissions` table and `PermissionService` provide authorization checks.
 
-Esecuzione e sviluppo
----------------------
-Prerequisiti:
+Running and development
+-----------------------
+Prerequisites:
 - Java 21
 - Maven
-- Docker (per eseguire docker-compose)
+- Docker (to run docker-compose)
 
-Build del progetto:
+Build the project:
 
 ```powershell
-mvn -f java/pom.xml clean package -DskipTests
+mvn -DskipTests clean package
 ```
 
-Avvio con Docker (nel folder `java`):
+Start with Docker:
 
 ```powershell
-cd java
 docker compose up --build
 ```
 
-Endpoint principali
-- POST /api/users/register -> registra un utente
-- POST /api/users/login -> ritorna { token }
-- GET /api/todos -> lista todo (autenticazione richiesta)
-- POST /api/todos -> crea todo (autenticazione richiesta)
-- PUT /api/todos/{id} -> aggiorna todo (deve essere owner o possedere permission 'todos.manage')
+Main endpoints
+- POST /api/users/register -> registers a user
+- POST /api/users/login -> returns { token }
+- GET /api/todos -> list todos (authentication required)
+- POST /api/todos -> create todo (authentication required)
+- PUT /api/todos/{id} -> update todo (must be owner or have permission 'todos.manage')
 
-Note operative e raccomandazioni
---------------------------------
-- Secret JWT: NON usare il valore hard-coded in produzione. Utilizzare secret manager o variabili d'ambiente sicure.
-- Flyway: se il database ha già una baseline, creare migrazioni incrementali invece di modificare `V1__init.sql`.
-- Test: aggiungere test unitari e d'integrazione (es. Mockito per services, Testcontainers per DB).
-- Domain Events: al momento gli eventi sono pubblicati dai servizi dopo il salvataggio; valutare l'uso di transaction synchronization o repository wrapper per automatizzare la pubblicazione.
+Operational notes and recommendations
+-------------------------------------
+- JWT secret: DO NOT use the hard-coded value in production. Use a secret manager or environment variables.
+- Flyway: if your database already has a baseline, add incremental migrations instead of modifying `V1__init.sql`.
+- Tests: add unit and integration tests (e.g., Mockito for services, Testcontainers for DB).
+- Domain Events: currently events are published by services after persistence; consider transaction synchronization or repository wrappers to publish automatically after commit.
 
-Struttura directory (rilevante)
+Directory structure (relevant)
 
- - `src/main/java/it/alf/cleana/domain` - entità e domain events
- - `src/main/java/it/alf/cleana/repository` - JPA repositories
- - `src/main/java/it/alf/cleana/service` - casi d'uso / services
- - `src/main/java/it/alf/cleana/controller` - API REST
- - `src/main/java/it/alf/cleana/security` - JWT provider, PBKDF2 hasher
+- `src/main/java/it/alf/cleana/domain` - entities and domain events
+- `src/main/java/it/alf/cleana/repository` - JPA repositories
+- `src/main/java/it/alf/cleana/service` - use cases / services
+- `src/main/java/it/alf/cleana/controller` - REST API
+- `src/main/java/it/alf/cleana/security` - JWT provider, PBKDF2 hasher
 - `src/main/resources/db/migration` - Flyway migrations
-- `docker-compose.yml` - compose con postgres e seq
+- `docker-compose.yml` - compose file for Postgres and Seq
 
-Contatti e next steps
-- Se vuoi, posso:
-	- aggiungere test + Testcontainers,
-	- integrare un `PermissionEvaluator` personalizzato e usare `@PreAuthorize` per metodi,
-	- migliorare OpenAPI/Swagger con schemi e security definitions,
-	- aggiungere un meccanismo centrale per pubblicare domain events automaticamente post-commit.
+Next steps / offers
+- I can also:
+  - add tests + Testcontainers,
+  - integrate a custom `PermissionEvaluator` and use `@PreAuthorize` for method-level authorization,
+  - improve OpenAPI/Swagger with schemas and security definitions,
+  - add a central mechanism to publish domain events automatically post-commit.
 
